@@ -1,6 +1,8 @@
 import json
 import pathlib
 
+from db import connection
+
 file_path = pathlib.Path(__file__).parent.resolve() / 'address_data.json'
 
 address_data = []
@@ -27,28 +29,55 @@ def insert_data():
     address_data.append(new_data)
 
 
+def db_insert_data():
+    id = safety_int_input("ID : ")
+    address = input("주소 : ")
+    owner_name = input("이름 : ")
+    building_name = input("건물 이름 : ")
+    number_of_people = safety_int_input("사람의 수 : ")
+    data_of_construction = input("건설 날짜 : ")
+
+    sql = f"""
+    INSERT INTO test_db1 (id, address, owner_name, building_name, number_of_people, date_of_construction)
+    VALUES ({id}, '{address}', '{owner_name}', '{building_name}', {number_of_people}, '{data_of_construction}');
+    """
+
+    with connection.cursor() as c:
+        c.execute(sql)
+        connection.commit()
+
+
 def delete_data():
     while True:
         id_of_deletedata = safety_int_input("삭제할 ID : ")
-        for n in range(len(address_data)):
-            if address_data[n]['id'] == id_of_deletedata:
-                del address_data[n]
-                return
-            elif address_data is None:
-                print('비어있음')
-                yes_or_no = input('작업을 계속 하시겠습니까?(Y/N) : ')
-                if yes_or_no == 'N' and yes_or_no == 'n':
-                    return
+        sql = f"""
+        DELETE FROM test_db1 WHERE id = {id_of_deletedata}
+        """
+
+        with connection.cursor() as c:
+            c.execute(sql)
+            results = c.fetchall()
+            connection.commit()
+            return
+
+
+
 
 
 def retrieve_data():
     while True:
         id_of_retrieve_data = safety_int_input("조회할 ID : ")
 
-        for n in range(len(address_data)):
-            if address_data[n]['id'] == id_of_retrieve_data:
-                value_of_print = address_data[n]
-                print(value_of_print)
+        sql = f"""
+        SELECT * FROM test_db1 WHERE id = {id_of_retrieve_data}
+        """
+
+        with connection.cursor() as c:
+            c.execute(sql)
+            results = c.fetchall()
+
+            if results:
+                print(results)
                 return
 
         print('비어있음')
@@ -63,15 +92,14 @@ def modify_data():
         item_of_modify = input(
             "수정할 아이템(id/address/owner_name/building_name/number_of_people/date_of_construction 입력 : ")
         data_of_modify = input("수정할 데이터 입력 : ")
-        for n in range(len(address_data)):
-            if address_data[n]['id'] == id_of_modifydata:
-                address_data[n][item_of_modify] = data_of_modify
-                return
-            elif address_data[n] == None:
-                print('비어있음')
-                yes_or_no = input('작업을 계속 하시겠습니까?(Y/N) : ')
-                if yes_or_no == 'N' or yes_or_no == 'n':
-                    return
+        sql = f"""
+        UPDATE test_db1 SET {item_of_modify} = '{data_of_modify}' WHERE id = {id_of_modifydata}
+        """
+        with connection.cursor() as c:
+            c.execute(sql)
+            results = c.fetchall()
+            connection.commit()
+            return
 
 
 def save_file():
@@ -100,13 +128,13 @@ if __name__ == '__main__':
         if navigation == 0:
             exit(0)
         elif navigation == 1:
-            insert_data()
+            db_insert_data()
         elif navigation == 2:
             retrieve_data()
         elif navigation == 3:
             modify_data()
         elif navigation == 4:
-            retrieve_data()
+            delete_data()
         elif navigation == 5:
             save_file()
         elif navigation == 6:
